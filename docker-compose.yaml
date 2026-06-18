@@ -1,0 +1,38 @@
+networks:
+  test-network:
+    driver: bridge
+
+services:
+  # Наш локальный mock-сервер
+  wiremock:
+    image: wiremock/wiremock:3.3.1
+    ports:
+      - "8089:8080"
+    volumes:
+      - ./wiremock:/home/wiremock
+    networks:
+      - test-network
+
+  # Сервис автоматического запуска тестов
+  api-tests:
+    image: maven:3.9.5-eclipse-temurin-17
+    depends_on:
+      - wiremock
+    volumes:
+      - .:/app
+      - ~/.m2:/root/.m2
+    working_dir: /app
+    command: mvn clean test -Dbase.url=http://wiremock:8080
+    networks:
+      - test-network
+
+  # Сервис для Allure
+  allure:
+    image: frankescobar/allure-docker-service
+    ports:
+      - "5050:5050"
+    volumes:
+      - ./allure-results:/app/allure-results
+      - ./allure-report:/app/allure-report
+    networks:
+      - test-network

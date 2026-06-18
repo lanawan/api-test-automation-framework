@@ -1,0 +1,33 @@
+stages:
+  - test
+  - reports
+
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+
+cache:
+  paths:
+    - .m2/repository/
+
+run_api_tests:
+  stage: test
+  image: maven:3.9.5-eclipse-temurin-17
+  script:
+    - mvn clean test
+  allow_failure: true
+  artifacts:
+    when: always
+    paths:
+      - allure-results/
+    expire_in: 1 day
+
+pages:
+  stage: reports
+  image: frankescobar/allure-docker-service
+  script:
+    - allure generate allure-results -o public
+  artifacts:
+    paths:
+      - public
+  only:
+    - main

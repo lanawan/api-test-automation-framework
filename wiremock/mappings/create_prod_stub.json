@@ -1,0 +1,31 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "/api/prod",
+    "headers": {
+      "Authorization": {
+        "contains": "Bearer"
+      }
+    },
+    "bodyPatterns": [
+      {
+        "matchesJsonPath": "$.prodId"
+      },
+      {
+        "matchesJsonPath": "$.status"
+      }
+    ]
+  },
+  "response": {
+    "status": 201,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "id": "generated-uuid-12345",
+      "prodId": "testingId",
+      "status": "testingStatus",
+      "createdAt": "2026-06-18T22:40:00Z"
+    }
+  }
+}
