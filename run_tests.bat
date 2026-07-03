@@ -20,7 +20,7 @@ if exist %LOCAL_ALLURE_DIR% rmdir /s /q %LOCAL_ALLURE_DIR%
 mkdir %LOCAL_ALLURE_DIR%
 
 echo === 3. Связываем папку Minikube с твоим ПК через Mount ===
-:: Используем наши переменные среды для монтирования
+:: Запускаем монтирование в фоновом режиме
 start /b minikube mount %LOCAL_ALLURE_DIR%:%MINIKUBE_ALLURE_DIR%
 
 echo Ожидаем 5 секунд для настройки связи папок...
@@ -40,6 +40,18 @@ kubectl logs -n qa-tests -l job-name=api-tests-job -f
 
 echo === 7. Запускаем Allure отчет в браузере ===
 echo Файлы синхронизированы! Открываем отчет из переменной %LOCAL_ALLURE_DIR%...
+echo Для завершения работы и закрытия сервера Allure нажмите Ctrl+C в этой консоли.
 allure serve %LOCAL_ALLURE_DIR%
 
+:: ==========================================
+:: БЛОК ОЧИСТКИ РЕСУРСОВ ПОСЛЕ ЗАКРЫТИЯ ALLURE
+:: ==========================================
+echo.
+echo === 8. Очистка фоновых процессов ===
+echo Завершаем фоновое монтирование Minikube Mount...
+
+:: Ищем процесс minikube.exe, который выполняет mount, и жестко закрываем его (/F)
+wmic process where "name='minikube.exe' and CommandLine like '%%mount%%'" call terminate > nul 2>&1
+
+echo [УСПЕХ] Все ресурсы ПК успешно освобождены.
 pause
