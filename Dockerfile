@@ -1,26 +1,28 @@
-# Используем минимальный готовый образ с Maven и Java 17
 FROM maven:3.9.6-eclipse-temurin-17-alpine
 
 WORKDIR /automation
 
-# Создаем non-root пользователя и настраиваем домашнюю папку для Maven
+# Создаем пользователя qa и даем права на рабочую директорию
 RUN addgroup -S qa && adduser -S qa -G qa && \
-    mkdir -p /home/qa/.m2 && chown -R qa:qa /home/qa
+    mkdir -p /home/qa/.m2 && \
+    chown -R qa:qa /home/qa && \
+    chown -R qa:qa /automation
 
-# Переключаемся на пользователя ДО копирования файлов
 USER qa
 
-# Шаг 1: Кэшируем зависимости (теперь они скачиваются в /home/qa/.m2)
+# Кэшируем зависимости
 COPY --chown=qa:qa pom.xml .
 RUN mvn dependency:go-offline -B
 
-# Шаг 2: Копируем исходный код
+# Копируем исходный код
 COPY --chown=qa:qa src ./src
 
-# Шаг 3: Компилируем тесты заранее
+# Компилируем тесты
 RUN mvn test-compile -B
 
+# ГЛОБАЛЬНАЯ ПЕРЕМЕННАЯ: Путь к результатам по умолчанию
+ENV ALLURE_RESULTS_DIR="/automation/allure-results"
 ENV TEST_SUITE=""
 
-# Указываем путь к результатам Allure внутри рабочей директории
-ENTRYPOINT ["sh", "-c", "mvn test -Dsuite=${TEST_SUITE} -Dallure.results.directory=/automation/allure-results"]
+# Передаем переменную среды внутрь флага Maven
+ENTRYPOINT ["sh", "-c", "mvn test -Dsuite=${TEST_SUITE} -Dallure.results.directory=${ALLURE_RESULTS_DIR}"]

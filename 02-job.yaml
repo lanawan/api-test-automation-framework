@@ -1,0 +1,43 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: api-tests-job
+  namespace: qa-tests
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      securityContext:
+        fsGroup: 0
+        runAsUser: 0
+        runAsGroup: 0
+
+      containers:
+        - name: rest-assured-tests
+          image: docker.io/library/api-tests:jenkins
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: TEST_SUITE
+              value: "Smoke"
+            # Передаем параметризованный путь внутрь контейнера
+            - name: ALLURE_RESULTS_DIR
+              value: "/automation/allure-results"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1"
+          volumeMounts:
+            - name: allure-volume
+              # K8s примонтирует папку именно туда, куда указывает наша переменная
+              mountPath: "/automation/allure-results"
+
+      restartPolicy: Never
+
+      volumes:
+        - name: allure-volume
+          hostPath:
+            path: /data/allure-results
+            type: DirectoryOrCreate
