@@ -1,0 +1,23 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: qa-tests        # Изолируем наши тесты от других приложений в кластере
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: api-tests-job
+  namespace: qa-tests   # Запускаем строго в нашем namespace
+spec:
+  backoffLimit: 0       # Если тесты упали, k8s НЕ должен пытаться запустить их снова
+  template:
+    spec:
+      containers:
+        - name: rest-assured-tests
+          image: api-tests:final  # Собранный Docker-образ
+          imagePullPolicy: IfNotPresent # Берем локальный образ (для Minikube/Docker Desktop)
+          env:
+            - name: TEST_SUITE
+              value: "Smoke"        # Передаем параметры внутрь контейнера
+      restartPolicy: Never      # Контейнер не перезапускается после завершения работы
